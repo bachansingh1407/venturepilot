@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String?
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  prospects    Prospect[]
+  interviews   Interview[]
+  hypotheses   Hypothesis[]
+  offers       Offer[]
+  experiments  Experiment[]
+  logEntries   FounderLog[]
+  settings     UserSettings?
+}
+
+model UserSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  hours     String   @default("6–10 hours")
+  runway    String   @default("Under 3 months")
+  segment   String   @default("Not selected yet")
+  currency  String   @default("INR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Prospect {
+  id           String      @id @default(cuid())
+  userId       String
+  name         String
+  company      String?
+  role         String?
+  segment      String
+  channel      String?
+  status       String      @default("Identified")
+  fit          String?
+  nextAction   String?
+  lastActivity DateTime    @default(now())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviews   Interview[]
+  offers       Offer[]
+  @@index([userId, status])
+}
+
+model Interview {
+  id         String    @id @default(cuid())
+  userId     String
+  prospectId String?
+  customer   String
+  segment    String
+  problem    String
+  last       String?
+  frequency  String    @default("Unknown")
+  impact     String?
+  workaround String?
+  spend      String?
+  buyer      String?
+  action     String?
+  unknowns   String?
+  confidence String    @default("Low")
+  quote      Boolean   @default(false)
+  incident   Boolean   @default(false)
+  buying     String    @default("No")
+  occurredAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prospect   Prospect? @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+  @@index([userId, occurredAt])
+}
+
+model Hypothesis {
+  id        String   @id @default(cuid())
+  userId    String
+  problem   String
+  segment   String
+  evidence  String   @default("Unknown")
+  severity  String   @default("Unknown")
+  frequency String   @default("Unknown")
+  access    String   @default("Unknown")
+  spend     String   @default("Unknown")
+  rationale String?
+  status    String   @default("Investigating")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, status])
+}
+
+model Offer {
+  id         String    @id @default(cuid())
+  userId     String
+  prospectId String?
+  customer   String
+  offer      String
+  price      Float     @default(0)
+  currency   String    @default("INR")
+  status     String    @default("Offer made")
+  cash       Float     @default(0)
+  notes      String?
+  date       DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prospect   Prospect? @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+  @@index([userId, status])
+}
+
+model Experiment {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  date      DateTime @default(now())
+  status    String   @default("Planned")
+  time      Float    @default(0)
+  cost      Float    @default(0)
+  result    String?
+  next      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, date])
+}
+
+model FounderLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @default(now())
+  type      String   @default("Hypothesis")
+  title     String
+  notes     String
+  next      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, date])
+}
